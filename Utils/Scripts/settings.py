@@ -1,11 +1,13 @@
-# Debug
-DEBUG: bool = True
-
-# region main
-
+# region allowed to touch
 # Field dims
 DIMENSION: int = 8
 
+# Misc
+fps_max: float = 60 # 0 for 1000 (max)
+
+# endregion
+
+# region dont touch
 # Field elements
 EMPTY: int = -1
 GRASS: int = 0
@@ -21,7 +23,6 @@ elements = {
     PLACEHOLDER: "🪧"
 }
 
-# Misc
-fps_max: int = 0 # 0 for 1000 (max)
-
+# Debug
+DEBUG: bool = False
 # endregion
