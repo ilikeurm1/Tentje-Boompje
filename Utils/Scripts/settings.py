@@ -4,7 +4,6 @@ DIMENSION: int = 8
 
 # Misc
 fps_max: float = 60 # 0 for 1000 (max)
-
 # endregion
 
 # region dont touch
