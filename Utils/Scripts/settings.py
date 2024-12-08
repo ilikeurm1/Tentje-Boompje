@@ -3,7 +3,7 @@
 DIMENSION: int = 8
 
 # Misc
-fps_max: float = 60 # 0 for 1000 (max)
+fps_max: float = 60 # 0 for no limit
 # endregion
 
 # region dont touch
@@ -24,4 +24,5 @@ elements = {
 
 # Debug
 DEBUG: bool = False
+
 # endregion
