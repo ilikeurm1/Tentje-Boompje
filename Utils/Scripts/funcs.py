@@ -12,7 +12,7 @@ def get_neighbors(pos: tuple[int, int], k: int, self: bool = False, filter: bool
 
     Args:
         pos (tuple[int, int]): The position of the element we want the neighbors.
-        k (int, 4 or 8): The amount of surrounding positions to return. (see example below)
+        k (int, 4 or 8): The amount of surrounding positions to return.
         self (bool, optional): If True, the function will also return the current position in the list. Defaults to False.
         filter (bool, optional): If True, the function will filter out the out of bound indexes. Defaults to True.
 
@@ -41,7 +41,7 @@ def get_neighbors(pos: tuple[int, int], k: int, self: bool = False, filter: bool
         if y - 1 >= 0
         else None,
 
-        (x, y)                                                  # Middel (current position | self)
+        (x, y)                                                   # Middel (current position | self)
         if self
         else None,
 
