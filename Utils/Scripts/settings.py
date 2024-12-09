@@ -1,9 +1,12 @@
 # region allowed to touch
-# Field dims
+
+# Board dimensions
 DIMENSION: int = 8
 
 # Misc
 fps_max: float = 60 # 0 for no limit
+lives: int = 3
+
 # endregion
 
 # region dont touch

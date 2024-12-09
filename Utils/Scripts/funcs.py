@@ -6,13 +6,15 @@ import random
 # endregion
 
 # region Helper functions
-def get_neighbors(pos: tuple[int, int], k: int, filter: bool = False) -> list[tuple[int, int]]:
+
+def get_neighbors(pos: tuple[int, int], k: int, self: bool = False, filter: bool = True) -> list[tuple[int, int]]:
     """A function that returns all the surrounding positions of a given position. For all the positions that are out of the list it sets those to 'None'.
 
     Args:
         pos (tuple[int, int]): The position of the element we want the neighbors.
         k (int, 4 or 8): The amount of surrounding positions to return. (see example below)
-        filter (bool, optional): If True, the function will filter out the out of bound indexes. Defaults to False.
+        self (bool, optional): If True, the function will also return the current position in the list. Defaults to False.
+        filter (bool, optional): If True, the function will filter out the out of bound indexes. Defaults to True.
 
     Returns:
         neighbors (list[tuple[int, int] | None]): The (un)filtered list of surrounding positions.
@@ -39,9 +41,9 @@ def get_neighbors(pos: tuple[int, int], k: int, filter: bool = False) -> list[tu
         if y - 1 >= 0
         else None,
 
-        # (x, y)                                                 # Middel -> Not needed as it is the current position
-        # if x >= 1 and y >= 1
-        # else None,
+        (x, y)                                                  # Middel (current position | self)
+        if self
+        else None,
 
         (x, y + 1)                                               # Right
         if y + 1 <= DIMENSION - 1
@@ -79,7 +81,7 @@ def touching_tents(board: np.ndarray, pos: tuple[int, int]) -> bool:
         bool: Are there touching tents?
     """
 
-    for neighbor in get_neighbors(pos, 8, True):
+    for neighbor in get_neighbors(pos, 8):
         # If the position is a tent a.k.a. the tents are touching
         if board[neighbor[0]][neighbor[1]] == TENT:
             return True
@@ -97,9 +99,6 @@ def pretty_print(board: np.ndarray) -> None:
         row = []
         for y in range(DIMENSION + 1):
             if x == 0 or y == DIMENSION:
-                if x == 0 and y == DIMENSION:
-                    row.append(elements[PLACEHOLDER])
-                else:
                     row.append(board[x][y])
             else:
                 row.append(elements[board[x][y]])
@@ -110,10 +109,11 @@ def pretty_print(board: np.ndarray) -> None:
 # endregion
 
 # region Board generation functions
+
 def randomly_place_tents_on_board(board: np.ndarray) -> tuple[np.ndarray, list[tuple[int, tuple[int, int], bool]]]:
     tent_positions: list[tuple[int, tuple[int, int]]] = []
 
-    for _ in range(round(DIMENSION * 2)):
+    for _ in range(round(DIMENSION * 1.75)):
         retry_counter = 0
         while True:
             x = random.randint(1, DIMENSION)
@@ -127,9 +127,13 @@ def randomly_place_tents_on_board(board: np.ndarray) -> tuple[np.ndarray, list[t
                 break
 
             if retry_counter in [round(DIMENSION ** 2 / 10 * i) for i in range(1, 11)]: # Will print ~ every 10%
-                    print(f"Retrying... (aborting: {round((retry_counter / DIMENSION ** 2) * 100)}%)")
+                    print(f"Retrying... (aborting: {round((retry_counter / DIMENSION ** 2) * 100)}%)", end='\r')
 
             retry_counter += 1
+
+        print("Placed tent!", end='\r')
+    
+    print("Done placing tents!")
 
     return board, tent_positions
 
@@ -139,7 +143,7 @@ def place_trees_on_board(board: np.ndarray) -> tuple[np.ndarray, list[tuple[int,
     for x in range(1, DIMENSION + 1): # for each row
         for y in range(DIMENSION): # for each column
             if board[x][y] == TENT:
-                neighbors = get_neighbors((x, y), 4, True)
+                neighbors = get_neighbors((x, y), 4)
                 random.shuffle(neighbors)
                 for nx, ny in neighbors:
                     if board[nx][ny] == EMPTY:
@@ -147,7 +151,8 @@ def place_trees_on_board(board: np.ndarray) -> tuple[np.ndarray, list[tuple[int,
                         tree_positions.append((TREE, (nx, ny), True))
                         break
                     else:
-                        print(f"Position: ({nx}, {ny}) is not empty it is: {board[nx][ny]} ({elements[board[nx][ny]]})")
+                        if DEBUG:
+                            print(f"Position: ({nx}, {ny}) is not empty it is: {board[nx][ny]} ({elements[board[nx][ny]]})")
 
     return board, tree_positions
 
@@ -170,15 +175,25 @@ def generate_tent_counts_cells(board: np.ndarray) -> np.ndarray:
         counter = sum(1 for x in range(1, DIMENSION + 1) if board[x][y] == TENT)
         board[0][y] = counter
 
-    # Step 3: Set the top right corner to a space
-    board[0][DIMENSION] = PLACEHOLDER
+    # Step 3: Set the top right corner to a the total amount of tents on the board
+    board[0][DIMENSION] = sum(board[0]) + 1
 
     return board
 
 def set_grass(board: np.ndarray) -> np.ndarray:
+    """Sets the grass on the board where there can't be any tents or trees.
+    if tree is given it will set grass around that tree and update the side numbers of the board.
+
+    Args:
+        board (np.ndarray): The board
+        tree (tuple[int, int] | None, optional): The position of the placed tree. Defaults to None.
+
+    Returns:
+        np.ndarray: The updated board.
+    """
+    # If the position of a tree is not given
     for y in range(1, DIMENSION + 1): # For every row
         for x in range(DIMENSION): # Go through every column
-            pretty_print(board)
 
             if board[0][x] == 0 or board[y][DIMENSION] == 0: # If the cell is in a collumn or a row with 0 tents
                 if board[y][x] != TREE:
@@ -186,7 +201,7 @@ def set_grass(board: np.ndarray) -> np.ndarray:
 
             else: # for the rest of the rows
                     if board[y][x] == EMPTY:
-                        trees_spaces = get_neighbors((y, x), 4, True)
+                        trees_spaces = get_neighbors((y, x), 4)
                         for nx, ny in trees_spaces:
                             if board[nx][ny] == TREE:
                                 break
@@ -212,11 +227,11 @@ def CREATE_VALID_GAME() -> tuple[np.ndarray, list[tuple[int, tuple[int, int], bo
         init_board (np.ndarray): The initial game board.
 
     Returns:
-        board, game_board_positions (np.ndarray, list[tuple[int, tuple[int, int]]]): The finished game board and the positions of the tents and trees expressed in indices.
+        board, trees_and_tents (np.ndarray, list[tuple[int, tuple[int, int]]]): The finished game board and the positions of the tents and trees expressed in indices.
     """
 
     # Define the list that will hold the positions of the tents and trees
-    game_board_positions: list[tuple[int, tuple[int, int], bool]] = []
+    trees_and_tents: list[tuple[int, tuple[int, int], bool]] = []
 
     # Step 1: Initialize the board
     # Board needs to be 1 bigger than the DIMENSION to hold the info about how many tents are in the rows and columns
@@ -241,11 +256,11 @@ def CREATE_VALID_GAME() -> tuple[np.ndarray, list[tuple[int, tuple[int, int], bo
     # Step 6: Delete the tents so the game is playable
     board = delete_tents(board)
 
-    game_board_positions.extend(tent_positions)
-    game_board_positions.extend(tree_positions)
+    trees_and_tents.extend(tent_positions)
+    trees_and_tents.extend(tree_positions)
 
     # return board
-    return board, game_board_positions
+    return board, trees_and_tents
 
 # endregion
 
@@ -255,8 +270,9 @@ def main() -> int:
     print("Hello from funcs.py")
 
     try:
-        board = CREATE_VALID_GAME()
+        board, trees_and_tents = CREATE_VALID_GAME()
         pretty_print(board)
+        print(trees_and_tents)
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -273,7 +289,6 @@ if __name__ == "__main__":
         GRASS,
         TREE,
         TENT,
-        PLACEHOLDER,
         elements,
         DEBUG,
     )
@@ -295,7 +310,6 @@ else:
         GRASS,
         TREE,
         TENT,
-        PLACEHOLDER,
         elements,
         DEBUG
     )
