@@ -3,6 +3,9 @@
 # Board dimensions
 DIMENSION: int = 8
 
+# Set all the places where there cant be a tent to grass (True) or leave them empty (False)
+PREPLACE_GRASS: bool = True
+
 # Misc
 fps_max: float = 60 # 0 for no limit
 lives: int = 3
