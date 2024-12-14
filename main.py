@@ -4,6 +4,7 @@
 import sys
 import numpy as np
 import pygame as pg
+import pyautogui as pag # type: ignore
 from Utils.Scripts.settings import (
     lives,
     DIMENSION,
@@ -301,11 +302,9 @@ def clicked_on_tent(board: np.ndarray, pos: tuple[int, int]) -> None:
     # Get all the surrounding
     neighbors = get_neighbors((row, col), 8)
     
-    print(neighbors)
     # set all the surrounding spaces to grass
     for n_col, n_row in neighbors:
-        if board[n_row][n_col] == EMPTY:
-            print(f"Changed: {n_row, n_col} to GRASS")
+        if board[n_row][n_col] != TREE and n_row != 0 and n_col != DIMENSION:
             board[n_row][n_col] = GRASS
 
     # Update the board
@@ -313,13 +312,13 @@ def clicked_on_tent(board: np.ndarray, pos: tuple[int, int]) -> None:
     board[0][row] -= 1
     
     # if the row is empty set all the spaces to grass
-    if board[0][row] == 0:
+    if board[0][row] <= 0:
         for x in range(1, DIMENSION + 1):
             if board[x][row] == EMPTY:
                 board[x][row] = GRASS
 
     # if the column is empty set all the spaces to grass
-    if board[col][DIMENSION] == 0:
+    if board[col][DIMENSION] <= 0:
         for y in range(DIMENSION):
             if board[col][y] == EMPTY:
                 board[col][y] = GRASS
@@ -348,7 +347,7 @@ def main() -> int:
         pg.event.post(pg.event.Event(UPDATE_BOARD))
 
         # Main loop
-        while lives != 0 and board[0][DIMENSION] != 0:
+        while lives != 0: # While the player has lives
             # Play the game:
             # Clear the screen
             screen.fill((0, 0, 0))
@@ -413,11 +412,6 @@ def main() -> int:
                             # Decrease lives when the player clicks on a wrong space
                             lives -= 1
 
-                            if lives == 0:
-                                print("Game over")
-                                print("You lost all your lives")
-                                print("Exiting the game")
-
                             pg.event.post(pg.event.Event(UPDATE_BOARD))
 
                 # region user events
@@ -453,16 +447,33 @@ def main() -> int:
             # Update the display
             pg.display.update([fps_counter_space, line])
             clock.tick(fps_max)
+            
+            # Check if the player has won
+            if board[0][DIMENSION] == 0:
+                # Show the last tent clicked
+                draw_board(screen, board, trees_and_tents)
+                
+                # Draw the lives counter (so it doesn't dissapear)
+                lives_counter.draw(screen)
+                
+                # Update the display
+                pg.display.flip()
 
-        draw_board(screen, board, trees_and_tents)
+                break # Break the loop if the player has won
+
+        if lives == 0:
+            pag.alert(text="You've lost", title="You lost 😥", button="OK")
+        else:
+            pag.alert(text="You've won", title="You won 🎉", button="OK")
 
         running = (
             False
-            if input("Do you want to play again? (y/n): ").lower() == "n"
+            if pag.confirm(text='You want to go again?', title='Go again?', buttons=['Y', 'N']) == 'N'
             else True
         )
         if running:
             lives = 3
+
         # endregion
 
     pg.quit()

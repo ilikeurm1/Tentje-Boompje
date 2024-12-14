@@ -126,14 +126,7 @@ def randomly_place_tents_on_board(board: np.ndarray) -> tuple[np.ndarray, list[t
             if retry_counter > DIMENSION**2: # try max #cells_on_board times to place a tent
                 break
 
-            if retry_counter in [round(DIMENSION ** 2 / 10 * i) for i in range(1, 11)]: # Will print ~ every 10%
-                    print(f"Retrying... (aborting: {round((retry_counter / DIMENSION ** 2) * 100)}%)", end='\r')
-
             retry_counter += 1
-
-        print("Placed tent!", end='\r')
-    
-    print("Done placing tents!")
 
     return board, tent_positions
 
@@ -181,12 +174,10 @@ def generate_tent_counts_cells(board: np.ndarray) -> np.ndarray:
     return board
 
 def set_grass(board: np.ndarray) -> np.ndarray:
-    """Sets the grass on the board where there can't be any tents or trees.
-    if tree is given it will set grass around that tree and update the side numbers of the board.
+    """Sets the grass on the board where there can't be any tents.
 
     Args:
         board (np.ndarray): The board
-        tree (tuple[int, int] | None, optional): The position of the placed tree. Defaults to None.
 
     Returns:
         np.ndarray: The updated board.
@@ -246,8 +237,9 @@ def CREATE_VALID_GAME() -> tuple[np.ndarray, list[tuple[int, tuple[int, int], bo
     # Step 4: Generate the tent counts for the cells
     board = generate_tent_counts_cells(board)
 
-    # Step 5: Set all the places where there can't be anything to grass
-    board = set_grass(board)
+    # Step 5: Set all the places where there can't be anything to grass (if the user wants to)
+    if PREPLACE_GRASS:
+        board = set_grass(board)
 
     # Print the board to see if its correct
     if DEBUG:
@@ -285,6 +277,7 @@ def main() -> int:
 if __name__ == "__main__":
     from settings import (
         DIMENSION,
+        PREPLACE_GRASS,
         EMPTY,
         GRASS,
         TREE,
@@ -306,6 +299,7 @@ if __name__ == "__main__":
 else:
     from Utils.Scripts.settings import (
         DIMENSION,
+        PREPLACE_GRASS,
         EMPTY,
         GRASS,
         TREE,
